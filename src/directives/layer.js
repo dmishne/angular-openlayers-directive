@@ -114,6 +114,14 @@ angular.module('openlayers-directive').directive('olLayer', function($log, $q, o
                             }
                         }
 
+                        if (properties.minResolution) {
+                            olLayer.setMinResolution(properties.minResolution);
+                        }
+
+                        if (properties.maxResolution) {
+                            olLayer.setMaxResolution(properties.maxResolution);
+                        }
+
                     } else {
                         var isNewLayer = (function(olLayer) {
                             // this function can be used to verify whether a new layer instance has
@@ -193,6 +201,20 @@ angular.module('openlayers-directive').directive('olLayer', function($log, $q, o
                             // not every layer has a setStyle method
                             if (olLayer.setStyle && angular.isFunction(olLayer.setStyle)) {
                                 olLayer.setStyle(style);
+                            }
+                        }
+
+                        //set min resolution
+                        if (!equals(properties.minResolution, oldProperties.minResolution) || isNewLayer(olLayer)) {
+                            if (isDefined(properties.minResolution)) {
+                                olLayer.setMinResolution(properties.minResolution);
+                            }
+                        }
+
+                        //set max resolution
+                        if (!equals(properties.maxResolution, oldProperties.maxResolution) || isNewLayer(olLayer)) {
+                            if (isDefined(properties.maxResolution)) {
+                                olLayer.setMaxResolution(properties.maxResolution);
                             }
                         }
                     }

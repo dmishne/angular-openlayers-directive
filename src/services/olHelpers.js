@@ -38,6 +38,7 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
             attribution: ol.control.Attribution,
             fullscreen: ol.control.FullScreen,
             mouseposition: ol.control.MousePosition,
+            overviewmap: ol.control.OverviewMap,
             rotate: ol.control.Rotate,
             scaleline: ol.control.ScaleLine,
             zoom: ol.control.Zoom,
@@ -234,6 +235,10 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
                     params: source.params,
                     attributions: createAttribution(source)
                 };
+
+                if (source.serverType) {
+                    wmsConfiguration.serverType = source.serverType;
+                }
 
                 if (source.url) {
                     wmsConfiguration.url = source.url;
@@ -606,12 +611,23 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
         createView: function(view) {
             var projection = createProjection(view);
 
-            return new ol.View({
+            var viewConfig = {
                 projection: projection,
                 maxZoom: view.maxZoom,
-                minZoom: view.minZoom,
-                extent: view.extent
-            });
+                minZoom: view.minZoom
+            };
+
+            if (view.center) {
+                viewConfig.center = view.center;
+            }
+            if (view.extent) {
+                viewConfig.extent = view.extent;
+            }
+            if (view.zoom) {
+                viewConfig.zoom = view.zoom;
+            }
+
+            return new ol.View(viewConfig);
         },
 
         // Determine if a reference is defined and not null
@@ -777,7 +793,7 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
             if ((type === 'Vector') && layer.clustering) {
                 oSource = new ol.source.Cluster({
                     source: oSource,
-                    distance: layer.clusteringDistance,
+                    distance: layer.clusteringDistance
                 });
             }
 
@@ -801,6 +817,13 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
                 oLayer.set('name', name);
             } else if (isDefined(layer.name)) {
                 oLayer.set('name', layer.name);
+            }
+
+            // set custom layer properties if given
+            if (isDefined(layer.customAttributes)) {
+                for (var key in layer.customAttributes) {
+                    oLayer.set(key, layer.customAttributes[key]);
+                }
             }
 
             return oLayer;
@@ -895,8 +918,11 @@ angular.module('openlayers-directive').factory('olHelpers', function($q, $log, $
 
         insertLayer: function(layers, index, layer) {
             if (layers.getLength() < index) {
+                // fill up with "null layers" till we get to the desired index
                 while (layers.getLength() < index) {
-                    layers.push(null);
+                    var nullLayer = new ol.layer.Image();
+                    nullLayer.index = layers.getLength(); // add index which will be equal to the length in this case
+                    layers.push(nullLayer);
                 }
                 layer.index = index;
                 layers.push(layer);
